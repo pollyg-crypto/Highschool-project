@@ -1,0 +1,109 @@
+let colorlist = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000'];
+
+let movers = [];
+let G = 0.1;
+let wind;
+let windActive = false;
+
+function setup() {
+  createCanvas(400, 400);
+  for (let i = 0; i < 10; i++) {
+    movers.push(new Mover(random(width), random(height), random(-1, 1), random(-1, 1), 10, random(colorlist)));
+  }
+  ellipseMode(RADIUS);
+}
+
+function draw() {
+  background(220);
+
+  windActive = keyIsDown(87); // W key
+  if (windActive) {
+    wind = random(-5, 5); // dynamic wind every frame
+  }
+
+  for (let i = 0; i < movers.length; i++) {
+    for (let j = i + 1; j < movers.length; j++) {
+      movers[i].applycollision(movers[j]);
+    }
+  }
+
+  for (let mover of movers) {
+    mover.update();
+  }
+}
+
+
+
+class Mover {
+  constructor(x, y, dx, dy, r, c) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(dx, dy);
+    this.acc = createVector(0, 0);
+    this.r = r;
+    this.c = c;
+  }
+
+  applyForce(force) {
+    this.acc.add(force);
+  }
+
+  update() {
+    this.applyForce(createVector(0, G)); // gravity
+    if (keyIsDown(87)) {
+      this.applyForce(createVector(wind, 0)); // wind force
+    }
+
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.mult(0); // reset acceleration
+
+    this.containWithinWindow();
+    this.draw();
+  }
+
+  draw() {
+    fill(this.c);
+    circle(this.pos.x, this.pos.y, this.r);
+  }
+
+  containWithinWindow() {
+    if (this.pos.x < this.r) {
+      this.pos.x = this.r;
+      this.vel.x *= -1;
+      this.vel.x = Math.sign(this.vel.x) * Math.max(0, Math.abs(this.vel.x) - 0.5);
+    }
+    if (this.pos.x > width - this.r) {
+      this.pos.x = width - this.r;
+      this.vel.x *= -1;
+      this.vel.x = Math.sign(this.vel.x) * Math.max(0, Math.abs(this.vel.x) - 0.5);
+    }
+    if (this.pos.y < this.r) {
+      this.pos.y = this.r;
+      this.vel.y *= -1;
+    }
+    if (this.pos.y > height - this.r) {
+      this.pos.y = height - this.r;
+      this.vel.y *= -1;
+      this.vel.y = Math.sign(this.vel.y) * Math.max(0, Math.abs(this.vel.y) - 0.5);
+    }
+  }
+
+  applycollision(other) {
+    let d = p5.Vector.dist(this.pos, other.pos);
+    if (d < this.r + other.r) {
+      this.vel.mult(-1);
+      other.vel.mult(-1);
+
+      let overlap = this.r + other.r - d + 0.5;
+      let angle = p5.Vector.sub(this.pos, other.pos).heading();
+      let offset = p5.Vector.fromAngle(angle).mult(overlap / 2);
+      this.pos.add(offset);
+      other.pos.sub(offset);
+
+      this.vel.x = Math.sign(this.vel.x) * Math.max(0, Math.abs(this.vel.x) - 0.5);
+      this.vel.y = Math.sign(this.vel.y) * Math.max(0, Math.abs(this.vel.y) - 0.5);
+      other.vel.x = Math.sign(other.vel.x) * Math.max(0, Math.abs(other.vel.x) - 0.9);
+      other.vel.y = Math.sign(other.vel.y) * Math.max(0, Math.abs(other.vel.y) - 0.9);
+    }
+  }
+}
