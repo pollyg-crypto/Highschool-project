@@ -1,0 +1,208 @@
+let time = 0; // A custom variable to track time
+let fans = []; // Array to store fan objects
+let rows = 3; // Number of rows
+let cols = 6; // Number of columns per side
+
+let baseRadius = 100; // Base radius for the sun
+let radiusBreath; // Breathing radius modifier
+let breathingSpeed = 0.064; // Speed of the breathing effect
+
+let ribbons = [];
+
+function setup() {
+  createCanvas(800, 600);
+
+  // Create fans for the right side (fan type 0)
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      let fan = {
+        x: 410 + j * 70, // Evenly space fans in columns on the left side
+        y: 400 + i * 50, // Evenly space fans in rows
+        type: 0, // Fan type 0 for left side
+      };
+      fans.push(fan); // Add fan object to the fans array
+    }
+  }
+
+  // Create fans for the left side (fan type 1)
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      let fan = {
+        x: 20 + j * 60, // Evenly space fans in columns on the right side
+        y: 400 + i * 80, // Evenly space fans in rows
+        type: 1, // Fan type 1 for right side
+      };
+      fans.push(fan); // Add fan object to the fans array
+    }
+  }
+  //Create Ribbon falling out of sky
+   for (let i = 0; i < 100; i++) {
+    let ribbon = {
+      h : random(10,20),
+      x: random(width), // Random starting position horizontally
+      y: random(-500,-10), // Start high off the screen
+      color: color(random(255), random(255), random(255)), // Random color
+      dy: random(1, 3), // Random speed for vertical movement
+      dx: random(-1, 1) // Random horizontal movement
+      
+    };
+    ribbons.push(ribbon);
+  }
+
+}
+
+
+
+function draw() {
+  background(220);
+  //ocean
+    fill(42,150,232)
+  rect(0,350,800,70)
+  //sand
+  fill(252,235,179)
+  rect(0,420,800,180)
+  //stage
+  fill(50)
+  rect(0,300,350,300) 
+
+ drawSinger(280,300)
+  
+  
+  
+  // Increment the time variable to simulate passing time
+  time += 0.00644;
+
+  // swinging hand
+  let handAngleBase = sin(time) * PI / 4; // Oscillate between -PI/4 and +PI/4 for all fans
+
+  // Loop through each fan and draw them
+  for (let i = 0; i < fans.length; i++) {
+    let fan = fans[i];
+
+     // Calculate a unique phase offset for each fan
+  let phaseOffset = (i % 4) * (PI / 8); // 90-degree (PI/2) offset for every 4 fans
+  
+  // For the right side, invert the direction of the arm movement
+  let handAngle = sin(time + phaseOffset) * PI / 4; // Add the offset
+    // Draw each fan based on its type
+    if (fan.type === 0) {
+      drawFan1(fan.x, fan.y, handAngle); // Fan 1 on right side
+    } else {
+      drawFan0(fan.x, fan.y, handAngle); // Fan 0 on left side
+    }
+  }
+  
+  //DrawSun
+   time += breathingSpeed;
+  radiusBreath = sin(time) * 10 + baseRadius; // The radius will oscillate between baseRadius-20 and baseRadius+20
+  drawSun(600,200, radiusBreath);
+  
+  //Draw ribbons
+  for (let i = 0; i < ribbons.length; i++) {
+    let ribbon = ribbons[i];
+
+    // Movement of ribbon
+    ribbon.y += ribbon.dy; // Move the ribbon down
+    ribbon.x += ribbon.dx; // Move the ribbon horizontally
+
+    // If the ribbon goes off the bottom of the screen, reset it
+    if (ribbon.y > height) {
+      ribbon.y = random(-500, -50); // Reset vertical position to fall from the top again
+      ribbon.x = random(width); // Reset horizontal position
+    }
+
+    // Draw the ribbon
+    fill(ribbon.color);
+    noStroke();
+    rect(ribbon.x, ribbon.y, 5,ribbon.h); // Ribbon (ellipse shape)
+  }
+
+}
+function drawFan1(x, y, handAngle) {
+  // Draw the fan's head
+  fill(247,231,213); // Skin color
+  ellipse(x, y - 30, 50, 60); // Head (circle)
+
+  // Draw the fan's body
+  fill(217,38,38); // Clothing color
+  rect(x - 25, y, 50, 70); // Body (rectangle)
+
+  // Draw the waving arm
+  push();
+  translate(x, y); // Move to the top of the body (shoulder position)
+  rotate(handAngle); // Rotate the arm
+  fill(150); // Arm color
+  rect(-5, -50, 15, 60); // Arm (rectangle), attached at the shoulder
+  
+  let r = sin(time) * 127 + 128; // Oscillating red
+  let g = sin(time + TWO_PI / 3) * 127 + 128; // Oscillating green
+  let b = sin(time + TWO_PI / 3 * 2) * 127 + 128; // Oscillating blue
+
+  fill(r, g, b); // Set the ball's color
+  circle(0,-60,30)
+  pop();
+}
+
+function drawFan0(x, y, handAngle) {
+  
+   // Draw the waving arm
+  push();
+  translate(x-20, y); // Move to the top of the body (shoulder position)
+  rotate(handAngle); // Rotate the arm
+  fill(150); // Arm color
+  rect(-5, -50, 15, 60); // Arm (rectangle), attached at the shoulder
+  
+  let r = sin(time) * 127 + 128; // Oscillating red
+  let g = sin(time + TWO_PI / 3) * 127 + 128; // Oscillating green
+  let b = sin(time + TWO_PI / 3 * 2) * 127 + 128; // Oscillating blue
+
+  fill(r, g, b); // Set the ball's color
+  circle(0,-60,30)
+  pop();
+  // Draw the fan's head
+  fill(247,231,213); // Skin color
+  ellipse(x, y - 30, 50, 60); // Head (circle)
+  // Draw the fan's body
+  fill(230,127,76); // Clothing color
+  rect(x - 25, y, 50, 70); // Body (rectangle)
+
+}
+
+function drawSun(x, y, radiusBreath) {
+  // Draw the sun's core (a yellow circle)
+  fill(255,229,180); // Yellow color
+  noStroke();
+  ellipse(x, y, radiusBreath * 2, radiusBreath * 2); // Sun's core, using the breathing radius
+  
+  fill(255, 204, 0)
+  circle(x,y,baseRadius*1.7)
+}
+
+function drawSinger (x,y) {
+   //Draw singer:
+   fill("white")
+  quad(x,y,
+      x-50,y,
+      x-40,y-100,
+      x-10,y-100)
+  
+  fill(247,231,213)
+  ellipse(x-25,y-130,60,60)
+  
+   push();
+  // Set the rotation so the arm points towards the microphone
+  translate(x - 25, y - 80); // Position of the arm
+  rotate(0); // Adjust the angle of the arm
+  fill(207,136,29); // Arm color
+  rect(-5, 0, 10, 50); // Arm (rectangle)
+  pop();
+
+ // Draw the microphone
+  fill(150); // Microphone color
+  ellipse(x + 20, y - 105, 15, 15); // Microphone head
+  stroke(10); // Microphone line
+  line(x + 40, y - 105, x + 40, y); // Microphone handle
+  noStroke()
+  rect(x+20,y-107.5,30,5)
+  rect(x,y-5,50,5)
+}
